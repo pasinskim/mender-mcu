@@ -180,6 +180,9 @@ mender_api_perform_authentication(mender_err_t (*get_identity)(mender_identity_t
         goto END;
     }
 
+    mender_log_info("payload: %s", payload);
+    mender_log_info("signature: %s", signature);
+
     /* Perform HTTP request */
     if (MENDER_OK
         != (ret = mender_http_perform(NULL,

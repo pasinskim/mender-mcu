@@ -32,6 +32,9 @@
 #include "mender-storage.h"
 #include "mender-tls.h"
 
+#include <zephyr/kernel.h>
+
+
 /**
  * @brief Keys buffer length
  */
@@ -155,12 +158,17 @@ mender_tls_init_authentication_keys(mender_err_t (*get_user_provided_keys)(char 
     char  *user_provided_key        = NULL;
     size_t user_provided_key_length = 0;
 
-    if (MENDER_OK != (ret = get_user_provided_keys(&user_provided_key, &user_provided_key_length))) {
-        mender_log_error("Unable to get user provided key");
-        goto END;
-    }
-    if (NULL != user_provided_key) {
+    if (NULL != get_user_provided_keys) {
+        /* Use user provided callback */
         mender_log_info("Getting authentication key...");
+        if (MENDER_OK != (ret = get_user_provided_keys(&user_provided_key, &user_provided_key_length))) {
+            mender_log_error("Unable to get user provided key");
+            goto END;
+        }
+        if (NULL == user_provided_key /* TOOO: strcmp  || "" == user_provided_key*/) {
+            mender_log_error("Got empty user key");
+            goto END;
+        }
         if (MENDER_OK
             != (ret = mender_tls_get_authentication_keys(&mender_tls_private_key,
                                                          &mender_tls_private_key_length,
@@ -171,25 +179,28 @@ mender_tls_init_authentication_keys(mender_err_t (*get_user_provided_keys)(char 
             mender_log_error("Unable to get user provided authentication key");
             goto END;
         }
+    } else {
         /* Retrieve or generate private and public keys */
-    } else if (MENDER_OK
-               != (ret = mender_storage_get_authentication_keys(
-                       &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length))) {
-        /* Generate authentication keys */
-        mender_log_info("Generating authentication keys...");
         if (MENDER_OK
-            != (ret = mender_tls_get_authentication_keys(
-                    &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length, NULL, 0))) {
-            mender_log_error("Unable to generate authentication keys");
-            goto END;
-        }
+                != (ret = mender_storage_get_authentication_keys(
+                        &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length))) {
+            /* Generate authentication keys */
+            mender_log_info("Generating authentication keys...");
+            if (MENDER_OK
+                != (ret = mender_tls_get_authentication_keys(
+                        &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length, NULL, 0))) {
+                mender_log_error("Unable to generate authentication keys");
+                goto END;
+            }
 
-        /* Record keys */
-        if (MENDER_OK
-            != (ret = mender_storage_set_authentication_keys(
-                    mender_tls_private_key, mender_tls_private_key_length, mender_tls_public_key, mender_tls_public_key_length))) {
-            mender_log_error("Unable to record authentication keys");
-            goto END;
+            // mender_log_info("Saving authentication keys...");
+            // /* Record keys */
+            // if (MENDER_OK
+            //     != (ret = mender_storage_set_authentication_keys(
+            //             mender_tls_private_key, mender_tls_private_key_length, mender_tls_public_key, mender_tls_public_key_length))) {
+            //     mender_log_error("Unable to record authentication keys");
+            //     goto END;
+            // }
         }
     }
 

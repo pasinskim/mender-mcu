@@ -27,6 +27,9 @@
 #include "mender-storage.h"
 #include "mender-tls.h"
 
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log_ctrl.h>
+
 /**
  * @brief Default host
  */
@@ -715,8 +718,6 @@ END:
 static mender_err_t
 mender_client_initialization_work_function(void) {
 
-    assert(NULL != mender_client_callbacks.get_user_provided_keys);
-
     char        *storage_deployment_data = NULL;
     mender_err_t ret;
 
@@ -729,7 +730,7 @@ mender_client_initialization_work_function(void) {
     /* Retrieve deployment data if it is found (following an update) */
     if (MENDER_OK != (ret = mender_storage_get_deployment_data(&storage_deployment_data))) {
         if (MENDER_NOT_FOUND != ret) {
-            mender_log_error("Unable to get deployment data");
+            mender_log_error("Unable to get deployment data, ret=%d", ret);
             goto REBOOT;
         }
     }
@@ -743,6 +744,8 @@ mender_client_initialization_work_function(void) {
         free(storage_deployment_data);
     }
 
+    mender_log_info("Done for good!");
+
     return MENDER_DONE;
 
 END:
@@ -750,6 +753,10 @@ END:
     return ret;
 
 REBOOT:
+
+    mender_log_info("Reboot \\o/");
+    // TODO: untested
+    log_panic();
 
     /* Delete pending deployment */
     mender_storage_delete_deployment_data();

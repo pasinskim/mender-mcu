@@ -75,6 +75,18 @@ nvs_read_alloc(struct nvs_fs *nvs, uint16_t id, void **data, size_t *length) {
     return MENDER_OK;
 }
 
+static mender_err_t
+nvs_write_check(struct nvs_fs *nvs, uint16_t id, const void *data, size_t len) {
+    ssize_t ret;
+
+    /* Retrieve length of the data */
+    ret = nvs_write(nvs, id, data, len);
+    if (ret < len){
+        mender_log_info("Wrote less bytes than expected, expected %d, wrote %d", len, ret);
+    }
+    return ret;
+}
+
 mender_err_t
 mender_storage_init(void) {
 
@@ -111,8 +123,8 @@ mender_storage_set_authentication_keys(unsigned char *private_key, size_t privat
     assert(NULL != public_key);
 
     /* Write keys */
-    if ((nvs_write(&mender_storage_nvs_handle, MENDER_STORAGE_NVS_PRIVATE_KEY, private_key, private_key_length) < 0)
-        || (nvs_write(&mender_storage_nvs_handle, MENDER_STORAGE_NVS_PUBLIC_KEY, public_key, public_key_length) < 0)) {
+    if ((nvs_write_check(&mender_storage_nvs_handle, MENDER_STORAGE_NVS_PRIVATE_KEY, private_key, private_key_length) < 0)
+        || (nvs_write_check(&mender_storage_nvs_handle, MENDER_STORAGE_NVS_PUBLIC_KEY, public_key, public_key_length) < 0)) {
         mender_log_error("Unable to write authentication keys");
         return MENDER_FAIL;
     }
@@ -134,7 +146,7 @@ mender_storage_get_authentication_keys(unsigned char **private_key, size_t *priv
         if (MENDER_NOT_FOUND == ret) {
             mender_log_info("Private key not available");
         } else {
-            mender_log_error("Unable to read private key");
+            mender_log_error("Unable to read private key, ret=%d", ret);
         }
         return ret;
     }
@@ -145,7 +157,7 @@ mender_storage_get_authentication_keys(unsigned char **private_key, size_t *priv
         if (MENDER_NOT_FOUND == ret) {
             mender_log_info("Public key not available");
         } else {
-            mender_log_error("Unable to read public key");
+            mender_log_error("Unable to read public key, ret=%d", ret);
         }
         free(*private_key);
         *private_key = NULL;
@@ -194,7 +206,7 @@ mender_storage_get_deployment_data(char **deployment_data) {
         if (MENDER_NOT_FOUND == ret) {
             mender_log_info("Deployment data not available");
         } else {
-            mender_log_error("Unable to read deployment data");
+            mender_log_error("Unable to read deployment data, ret=%d", ret);
         }
         return ret;
     }

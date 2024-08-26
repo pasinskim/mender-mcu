@@ -75,6 +75,23 @@ if MENDER_MCU_CLIENT
 
     endmenu
 
+    menu "Optional functionality"
+
+        config MENDER_FULL_PARSE_ARTIFACT
+            bool "Full Mender Artifact parse"
+            default y
+            help
+                TODO
+
+        config MENDER_PROVIDES_DEPENDS
+            bool "Provides and depends functionality"
+            default y
+            help
+                TODO
+            select MENDER_FULL_PARSE_ARTIFACT
+
+    endmenu
+
     menu "Add-ons integration"
 
         menu "Configure Add-on configuration"
