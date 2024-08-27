@@ -34,7 +34,7 @@ mender_log_print(uint8_t level, const char *filename, const char *function, int 
 
     (void)function;
     (void)filename;
-    char log[256] = { 0 };
+    char log[4096] = { 0 };
 
     /* Format message */
     va_list args;

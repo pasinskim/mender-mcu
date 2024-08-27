@@ -311,7 +311,7 @@ mender_tls_sign_payload(char *payload, char **signature, size_t *signature_lengt
         goto END;
     }
 
-    /* Encode signature to base64 (1 extra byte for the NUL character) */
+    /* Encode signature to base64 (1 extra byte for the NULL character) */
     if (NULL == (*signature = (char *)malloc(MENDER_TLS_SIGNATURE_LENGTH + 1))) {
         mender_log_error("Unable to allocate memory");
         ret = -1;
