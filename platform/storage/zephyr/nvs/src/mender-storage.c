@@ -50,15 +50,24 @@ static mender_err_t
 nvs_read_alloc(struct nvs_fs *nvs, uint16_t id, void **data, size_t *length) {
     ssize_t ret;
 
-    /* Retrieve length of the data */
-    ret = nvs_read(nvs, id, NULL, 0);
+    /* Allocate 1 byte fro the first peek read */
+    *data = malloc(1);
+    if (NULL == *data) {
+        mender_log_error("Unable to allocate memory for: %d", id);
+        return MENDER_FAIL;
+    }
+
+    /* Peek read to retrieve length of the data */
+    ret = nvs_read(nvs, id, *data, 0);
     if (ret <= 0) {
+        free(*data);
+        *data = NULL;
         return (0 == ret || -ENOENT == ret) ? MENDER_NOT_FOUND : MENDER_FAIL;
     }
     *length = (size_t)ret;
 
     /* Allocate memory */
-    *data = malloc(*length);
+    *data = realloc(*data, *length);
     if (NULL == *data) {
         mender_log_error("Unable to allocate memory for: %d", id);
         return MENDER_FAIL;
