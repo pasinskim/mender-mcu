@@ -173,7 +173,7 @@ mender_http_perform(char                *jwt,
 
 
     for (int a=0; a<6; a++) {
-        mender_log_info("header: %s", header_fields[a]);
+        mender_log_debug("HTTP header: %s", header_fields[a]);
     }
 
     request.header_fields = header_fields;

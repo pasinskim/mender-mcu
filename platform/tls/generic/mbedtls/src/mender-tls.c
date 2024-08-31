@@ -27,6 +27,7 @@
 #endif /* MBEDTLS_ERROR_C */
 #include <mbedtls/pk.h>
 #include <mbedtls/rsa.h>
+#include <mbedtls/ecdsa.h>
 #include <mbedtls/x509.h>
 #include "mender-log.h"
 #include "mender-storage.h"
@@ -193,14 +194,14 @@ mender_tls_init_authentication_keys(mender_err_t (*get_user_provided_keys)(char 
                 goto END;
             }
 
-            // mender_log_info("Saving authentication keys...");
-            // /* Record keys */
-            // if (MENDER_OK
-            //     != (ret = mender_storage_set_authentication_keys(
-            //             mender_tls_private_key, mender_tls_private_key_length, mender_tls_public_key, mender_tls_public_key_length))) {
-            //     mender_log_error("Unable to record authentication keys");
-            //     goto END;
-            // }
+            printf("Saving authentication keys...\n");
+            /* Record keys */
+            if (MENDER_OK
+                != (ret = mender_storage_set_authentication_keys(
+                        mender_tls_private_key, mender_tls_private_key_length, mender_tls_public_key, mender_tls_public_key_length))) {
+                mender_log_error("Unable to record authentication keys");
+                goto END;
+            }
         }
     }
 
@@ -398,6 +399,7 @@ mender_tls_generate_authentication_keys(mbedtls_pk_context *pk_context) {
         goto END;
     }
 
+#ifdef LLUIS_RSA
     /* PK setup */
     if (0 != (ret = mbedtls_pk_setup(pk_context, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA)))) {
         LOG_MBEDTLS_ERROR("Unable to setup pk", ret);
@@ -409,6 +411,20 @@ mender_tls_generate_authentication_keys(mbedtls_pk_context *pk_context) {
         LOG_MBEDTLS_ERROR("Unable to generate key", ret);
         goto END;
     }
+#else
+    /* PK setup */
+    if (0 != (ret = mbedtls_pk_setup(pk_context, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)))) {
+        LOG_MBEDTLS_ERROR("Unable to setup pk", ret);
+        goto END;
+    }
+
+    /* Generate key pair */
+    // TODO: study the different curves: MBEDTLS_ECP_DP_SECP256R1, MBEDTLS_ECP_DP_SECP192R1, ????
+    if (0 != (ret = mbedtls_ecdsa_genkey(mbedtls_pk_ec(*pk_context), mbedtls_ecp_curve_list()->grp_id, mbedtls_ctr_drbg_random, ctr_drbg))) {
+        LOG_MBEDTLS_ERROR("Unable to generate key", ret);
+        goto END;
+    }
+#endif
 
 END:
     /* Release mbedtls */
@@ -530,6 +546,7 @@ mender_tls_get_authentication_keys(unsigned char **private_key,
         goto END;
     }
     *private_key_length = (size_t)ret;
+    printf("private_key_length %d\n", *private_key_length);
     memcpy(*private_key, *private_key + MENDER_TLS_PRIVATE_KEY_LENGTH - *private_key_length, *private_key_length);
     if (NULL == (tmp = realloc(*private_key, *private_key_length))) {
         mender_log_error("Unable to allocate memory");
@@ -557,6 +574,7 @@ mender_tls_get_authentication_keys(unsigned char **private_key,
         goto END;
     }
     *public_key_length = (size_t)ret;
+    printf("public_key_length %d\n", *public_key_length);
     memcpy(*public_key, *public_key + MENDER_TLS_PUBLIC_KEY_LENGTH - *public_key_length, *public_key_length);
     if (NULL == (tmp = realloc(*public_key, *public_key_length))) {
         mender_log_error("Unable to allocate memory");
