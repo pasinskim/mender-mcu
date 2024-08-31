@@ -36,6 +36,7 @@
  * @brief NVS keys
  */
 #define MENDER_STORAGE_NVS_PRIVATE_KEY     1
+// TODO: save public key? What's the point?
 #define MENDER_STORAGE_NVS_PUBLIC_KEY      2
 #define MENDER_STORAGE_NVS_DEPLOYMENT_DATA 3
 #define MENDER_STORAGE_NVS_DEVICE_CONFIG   4
