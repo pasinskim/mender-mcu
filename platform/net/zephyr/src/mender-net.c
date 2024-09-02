@@ -195,9 +195,11 @@ mender_net_connect(const char *host, const char *port) {
 #ifdef CONFIG_NET_SOCKETS_SOCKOPT_TLS
 
     /* Set TLS_SEC_TAG_LIST option */
-    sec_tag_t sec_tag[] = {
+    sec_tag_t sec_tag[2] = {
         CONFIG_MENDER_NET_CA_CERTIFICATE_TAG,
+        CONFIG_MENDER_NET_CA_CERTIFICATE_TAG + 1,
     };
+
     if ((result = zsock_setsockopt(sock, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag, sizeof(sec_tag))) < 0) {
         mender_log_error("Unable to set TLS_SEC_TAG_LIST option, result = %d, errno = %d", result, errno);
         goto END;
