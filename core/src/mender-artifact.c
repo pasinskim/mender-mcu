@@ -318,6 +318,52 @@ mender_artifact_release_ctx(mender_artifact_ctx_t *ctx) {
     }
 }
 
+void hexDump(char *desc, void *addr, int len) 
+{
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    // Output description if given.
+    if (desc != NULL)
+        printf ("%s:\n", desc);
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                printf("  %s\n", buff);
+
+            // Output the offset.
+            printf("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf(" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e)) {
+            buff[i % 16] = '.';
+        } else {
+            buff[i % 16] = pc[i];
+        }
+
+        buff[(i % 16) + 1] = '\0';
+    }
+
+    // Pad out last line if not exactly 16 characters.
+    while ((i % 16) != 0) {
+        printf("   ");
+        i++;
+    }
+
+    // And print the final ASCII bit.
+    printf("  %s\n", buff);
+}
+
 static mender_err_t
 mender_artifact_parse_tar_header(mender_artifact_ctx_t *ctx) {
 
@@ -392,7 +438,8 @@ mender_artifact_parse_tar_header(mender_artifact_ctx_t *ctx) {
     ctx->file.name = tmp;
 
     /* Retrieve file size */
-    sscanf(tar_header->size, "%o", (unsigned int *)&(ctx->file.size));
+    ctx->file.size = (size_t) strtol((char *)tar_header->size, NULL, 8);
+    // TODO: if LONG_MIN or LONG_MAX....
     ctx->file.index = 0;
 
     /* Shift data in the buffer */
@@ -822,10 +869,11 @@ mender_artifact_read_meta_data(mender_artifact_ctx_t *ctx) {
     size_t index = 0;
 
     /* Retrieve payload index */
-    if (1 != sscanf(ctx->file.name, "header.tar/headers/%u/meta-data", (unsigned int *)&index)) {
-        mender_log_error("Invalid artifact format");
-        return MENDER_FAIL;
-    }
+    index = (size_t) strtol(ctx->file.name + strlen("header.tar/headers/"), NULL, 10);
+    // if (1 != sscanf(ctx->file.name, "header.tar/headers/%u/meta-data", (unsigned int *)&index)) {
+    //     mender_log_error("Invalid artifact format");
+    //     return MENDER_FAIL;
+    // }
     if (index >= ctx->payloads.size) {
         mender_log_error("Invalid artifact format");
         return MENDER_FAIL;
@@ -866,10 +914,11 @@ mender_artifact_read_data(mender_artifact_ctx_t *ctx, mender_err_t (*callback)(c
     mender_err_t ret;
 
     /* Retrieve payload index */
-    if (1 != sscanf(ctx->file.name, "data/%u.tar", (unsigned int *)&index)) {
-        mender_log_error("Invalid artifact format");
-        return MENDER_FAIL;
-    }
+    index = (size_t) strtol(ctx->file.name + strlen("data/"), NULL, 10);
+    // if (1 != sscanf(ctx->file.name, "data/%u.tar", (unsigned int *)&index)) {
+    //     mender_log_error("Invalid artifact format");
+    //     return MENDER_FAIL;
+    // }
     if (index >= ctx->payloads.size) {
         mender_log_error("Invalid artifact format");
         return MENDER_FAIL;
