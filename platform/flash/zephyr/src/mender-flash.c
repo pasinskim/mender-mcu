@@ -23,12 +23,48 @@
 #include "mender-flash.h"
 #include "mender-log.h"
 
+
+#include "binary-dump.h"
+
+static void
+write_two_blocks(void) {
+	struct flash_img_context ctx;
+	int ret;
+
+   	mender_log_info("START %s", CONFIG_BOARD_TARGET);
+
+	mender_log_info("flash_img_init");
+    ret = flash_img_init(&ctx);
+    mender_log_info("flash_img_init %d", ret);
+    mender_log_debug("flash_img_init Address: 0x%08x");
+
+    // mender_log_info("block 1");
+    // ret = flash_img_buffered_write(&ctx, block1, sizeof(block1), false);
+    // mender_log_info("flash_img_buffered_write %d", ret);    
+
+    // mender_log_info("flush!");
+	// ret = flash_img_buffered_write(&ctx, block2, 0, true);
+    // mender_log_info("flash_img_buffered_write %d", ret);
+
+    mender_log_info("block 2");
+    ret = flash_img_buffered_write(&ctx, block2, sizeof(block2), false);
+    mender_log_info("flash_img_buffered_write %d", ret);    
+
+    mender_log_info("flush!");
+	ret = flash_img_buffered_write(&ctx, block2, 0, true);
+    mender_log_info("flash_img_buffered_write %d", ret);
+
+    mender_log_info("DONE");
+}
+
 mender_err_t
 mender_flash_open(char *name, size_t size, void **handle) {
 
     assert(NULL != name);
     assert(NULL != handle);
     int result;
+
+    // write_two_blocks();
 
     /* Print current file name and size */
     mender_log_info("Start flashing artifact '%s' with size %d", name, size);
@@ -45,6 +81,11 @@ mender_flash_open(char *name, size_t size, void **handle) {
         return MENDER_FAIL;
     }
 
+    // if ((result = flash_area_flatten((struct flash_img_context *)*handle->flash_area, 0, (struct flash_img_context *)*handle->flash_area->fa_size)) < 0) {
+    //     mender_log_error("flash_area_flatten (%d)", result);
+    //     return MENDER_FAIL;
+    // }
+
     return MENDER_OK;
 }
 
@@ -53,6 +94,8 @@ mender_flash_write(void *handle, void *data, size_t index, size_t length) {
 
     (void)index;
     int result;
+
+    mender_log_debug("Flash writing %d bytes...", length);
 
     /* Check flash handle */
     if (NULL == handle) {
@@ -66,6 +109,8 @@ mender_flash_write(void *handle, void *data, size_t index, size_t length) {
         return MENDER_FAIL;
     }
 
+    mender_log_debug("Flash write done", length);
+
     return MENDER_OK;
 }
 
@@ -73,6 +118,7 @@ mender_err_t
 mender_flash_close(void *handle) {
 
     int result;
+    uint8_t tmp;
 
     /* Check flash handle */
     if (NULL == handle) {
@@ -81,10 +127,12 @@ mender_flash_close(void *handle) {
     }
 
     /* Flush data received to the update partition */
-    if ((result = flash_img_buffered_write((struct flash_img_context *)handle, NULL, 0, true)) < 0) {
+    if ((result = flash_img_buffered_write((struct flash_img_context *)handle, &tmp, 0, true)) < 0) {
         mender_log_error("flash_img_buffered_write failed (%d)", result);
         return MENDER_FAIL;
     }
+
+    mender_log_info("Done flashing artifact");
 
     return MENDER_OK;
 }

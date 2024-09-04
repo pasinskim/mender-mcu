@@ -1347,6 +1347,9 @@ mender_client_download_artifact_flash_callback(
     (void)meta_data;
     mender_err_t ret = MENDER_OK;
 
+    // mender_log_debug("mender_client_download_artifact_flash_callback id %s artifact %s type %s filename %s size %d index %zu length %zu", id, artifact_name, type, filename, size, index, length);
+    mender_log_debug("mender_client_download_artifact_flash_callback");
+
     /* Check if the filename is provided */
     if (NULL != filename) {
 
