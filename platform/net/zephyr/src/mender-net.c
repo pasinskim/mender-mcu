@@ -169,10 +169,12 @@ mender_net_connect(const char *host, const char *port) {
 
     /* Perform DNS resolution of the host; try RESOLVE_ATTEMPTS times */
     do {
+        mender_log_info("Doing DNS resolution of host '%s:%s', attempts left: %d", host, port, resolve_attempts);
         result = zsock_getaddrinfo(host, port, &hints, &addr);
         if (0 == result) {
             break;
         }
+        mender_log_info("sleeping for 1000 ms");
         /* Introduce a backoff mechanism to try every 10ms, 20ms, ..., 100ms */
         k_sleep(K_MSEC(10 * (RESOLVE_ATTEMPTS - resolve_attempts + 1)));
     } while (0 != --resolve_attempts);
@@ -217,6 +219,8 @@ mender_net_connect(const char *host, const char *port) {
         mender_log_error("Unable to set TLS_PEER_VERIFY option, result = %d, errno = %d", result, errno);
         goto END;
     }
+
+    mender_log_info("socket options set");
 
 #endif /* CONFIG_NET_SOCKETS_SOCKOPT_TLS */
 
