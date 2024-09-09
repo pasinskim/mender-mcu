@@ -47,16 +47,4 @@ if(CONFIG_MENDER_MCU_CLIENT)
     zephyr_library_compile_definitions(-DMENDER_CLIENT_VERSION=\"${MENDER_CLIENT_VERSION}\")
     zephyr_library_compile_definitions(-D_POSIX_C_SOURCE=200809L)  # Required for strdup and strtok_r support
     zephyr_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
-
-    # TODO: Figure out the cannonical way to look for the workspace
-    # Maybe target_include_directories(app PRIVATE ${ZEPHYR_NRF_MODULE_DIR}/modules/cjson/include)
-    zephyr_include_directories("${CMAKE_CURRENT_LIST_DIR}/../vendor/cjson")
-    # zephyr_library()
-    zephyr_library_sources(
-        "${CMAKE_CURRENT_LIST_DIR}/../vendor/cjson/cJSON.c"
-        "${CMAKE_CURRENT_LIST_DIR}/../vendor/cjson/cJSON_Utils.c"
-    )
-
-    # TODO: fix linking
-
 endif()
