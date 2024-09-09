@@ -34,13 +34,16 @@ mender_log_print(uint8_t level, const char *filename, const char *function, int 
 
     (void)function;
     (void)filename;
-    char log[4096] = { 0 };
 
-    /* Format message */
+    char   *log = NULL;
     va_list args;
     va_start(args, format);
-    vsnprintf(log, sizeof(log), format, args);
+    int ret = vasprintf(&log, format, args);
     va_end(args);
+    if (ret < 0) {
+        LOG_ERR("Unable format log message: %d", ret);
+        return MENDER_FAIL;
+    }
 
     /* Switch depending log level */
     switch (level) {
@@ -59,6 +62,8 @@ mender_log_print(uint8_t level, const char *filename, const char *function, int 
         default:
             break;
     }
+
+    free(log);
 
     return MENDER_OK;
 }
