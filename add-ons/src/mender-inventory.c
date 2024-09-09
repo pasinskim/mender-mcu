@@ -122,10 +122,10 @@ mender_inventory_set(mender_keystore_t *inventory) {
     mender_err_t ret;
 
     /* Take mutex used to protect access to the inventory key-store */
-    if (MENDER_OK != (ret = mender_scheduler_mutex_take(mender_inventory_mutex, -1))) {
-        mender_log_error("Unable to take mutex");
-        return ret;
-    }
+    // if (MENDER_OK != (ret = mender_scheduler_mutex_take(mender_inventory_mutex, -1))) {
+    //     mender_log_error("Unable to take mutex");
+    //     return ret;
+    // }
 
     /* Release previous inventory */
     if (MENDER_OK != (ret = mender_utils_keystore_delete(mender_inventory_keystore))) {
@@ -142,7 +142,7 @@ mender_inventory_set(mender_keystore_t *inventory) {
 END:
 
     /* Release mutex used to protect access to the inventory key-store */
-    mender_scheduler_mutex_give(mender_inventory_mutex);
+    //mender_scheduler_mutex_give(mender_inventory_mutex);
 
     return ret;
 }

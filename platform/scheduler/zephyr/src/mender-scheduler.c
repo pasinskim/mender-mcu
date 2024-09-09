@@ -248,6 +248,7 @@ mender_scheduler_mutex_create(void **handle) {
     if (NULL == (*handle = malloc(sizeof(struct k_mutex)))) {
         return MENDER_FAIL;
     }
+    return MENDER_OK;
     if (0 != k_mutex_init((struct k_mutex *)(*handle))) {
         free(*handle);
         *handle = NULL;
@@ -259,6 +260,8 @@ mender_scheduler_mutex_create(void **handle) {
 
 mender_err_t
 mender_scheduler_mutex_take(void *handle, int32_t delay_ms) {
+
+    return MENDER_OK;
 
     assert(NULL != handle);
 
@@ -273,6 +276,7 @@ mender_scheduler_mutex_take(void *handle, int32_t delay_ms) {
 mender_err_t
 mender_scheduler_mutex_give(void *handle) {
 
+    return MENDER_OK;
     assert(NULL != handle);
 
     /* Give mutex */
@@ -286,6 +290,7 @@ mender_scheduler_mutex_give(void *handle) {
 mender_err_t
 mender_scheduler_mutex_delete(void *handle) {
 
+    return MENDER_OK;
     assert(NULL != handle);
 
     /* Release memory */
