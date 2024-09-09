@@ -128,18 +128,27 @@ mender_tls_init(void) {
     return MENDER_OK;
 }
 
+// For testing only; we don't want to get key from the store but generate on the fly. 
+int recommision_in_memory = 0;
+
 mender_err_t
 mender_tls_init_authentication_keys(mender_err_t (*get_user_provided_keys)(char **user_provided_key, size_t *user_provided_key_length), bool recommissioning) {
 
     mender_err_t ret;
 
+    mender_log_warning("Generating authentication keys...");
+
+
     /* Release memory */
     if (NULL != mender_tls_private_key) {
+        mender_log_warning("Alrady have a private key");
+
         free(mender_tls_private_key);
         mender_tls_private_key = NULL;
     }
     mender_tls_private_key_length = 0;
     if (NULL != mender_tls_public_key) {
+        mender_log_warning("Already have a public key");
         free(mender_tls_public_key);
         mender_tls_public_key = NULL;
     }
@@ -182,19 +191,24 @@ mender_tls_init_authentication_keys(mender_err_t (*get_user_provided_keys)(char 
         }
     } else {
         /* Retrieve or generate private and public keys */
-        if (MENDER_OK
+        mender_log_info("Getting keys as nothing provided");
+        if (recommision_in_memory == 1 || MENDER_OK
                 != (ret = mender_storage_get_authentication_keys(
                         &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length))) {
             /* Generate authentication keys */
-            mender_log_info("Generating authentication keys...");
+            mender_log_info("Generating authentication keys... [%d]", recommision_in_memory);
             if (MENDER_OK
                 != (ret = mender_tls_get_authentication_keys(
                         &mender_tls_private_key, &mender_tls_private_key_length, &mender_tls_public_key, &mender_tls_public_key_length, NULL, 0))) {
                 mender_log_error("Unable to generate authentication keys");
+                recommision_in_memory = 0;
                 goto END;
             }
-
-            printf("Saving authentication keys...\n");
+            // if (recommision_in_memory == 1) {
+            //     mender_log_info("Using in-memory keys");
+            // } else {
+            //     mender_log_info("Saving authentication keys...");
+            // }
             /* Record keys */
             if (MENDER_OK
                 != (ret = mender_storage_set_authentication_keys(

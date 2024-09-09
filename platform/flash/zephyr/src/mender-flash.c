@@ -24,39 +24,6 @@
 #include "mender-log.h"
 
 
-#include "binary-dump.h"
-
-static void
-write_two_blocks(void) {
-	struct flash_img_context ctx;
-	int ret;
-
-   	mender_log_info("START %s", CONFIG_BOARD_TARGET);
-
-	mender_log_info("flash_img_init");
-    ret = flash_img_init(&ctx);
-    mender_log_info("flash_img_init %d", ret);
-    mender_log_debug("flash_img_init Address: 0x%08x");
-
-    // mender_log_info("block 1");
-    // ret = flash_img_buffered_write(&ctx, block1, sizeof(block1), false);
-    // mender_log_info("flash_img_buffered_write %d", ret);    
-
-    // mender_log_info("flush!");
-	// ret = flash_img_buffered_write(&ctx, block2, 0, true);
-    // mender_log_info("flash_img_buffered_write %d", ret);
-
-    mender_log_info("block 2");
-    ret = flash_img_buffered_write(&ctx, block2, sizeof(block2), false);
-    mender_log_info("flash_img_buffered_write %d", ret);    
-
-    mender_log_info("flush!");
-	ret = flash_img_buffered_write(&ctx, block2, 0, true);
-    mender_log_info("flash_img_buffered_write %d", ret);
-
-    mender_log_info("DONE");
-}
-
 mender_err_t
 mender_flash_open(char *name, size_t size, void **handle) {
 
@@ -80,11 +47,6 @@ mender_flash_open(char *name, size_t size, void **handle) {
         mender_log_error("flash_img_init failed (%d)", result);
         return MENDER_FAIL;
     }
-
-    // if ((result = flash_area_flatten((struct flash_img_context *)*handle->flash_area, 0, (struct flash_img_context *)*handle->flash_area->fa_size)) < 0) {
-    //     mender_log_error("flash_area_flatten (%d)", result);
-    //     return MENDER_FAIL;
-    // }
 
     return MENDER_OK;
 }
@@ -131,8 +93,6 @@ mender_flash_close(void *handle) {
         mender_log_error("flash_img_buffered_write failed (%d)", result);
         return MENDER_FAIL;
     }
-
-    mender_log_info("Done flashing artifact");
 
     return MENDER_OK;
 }

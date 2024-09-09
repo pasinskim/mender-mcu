@@ -146,6 +146,8 @@ mender_api_perform_authentication(mender_err_t (*get_identity)(mender_identity_t
         goto END;
     }
 
+    mender_log_info("Identity: [%s, %s]", identity->name, identity->value);
+
     /* Format identity */
     if (MENDER_OK != (ret = mender_utils_identity_to_json(identity, &json_identity))) {
         mender_log_error("Unable to format identity");
@@ -196,6 +198,8 @@ mender_api_perform_authentication(mender_err_t (*get_identity)(mender_identity_t
         mender_log_error("Unable to perform HTTP request");
         goto END;
     }
+
+    mender_log_info("Authentication done");
 
     /* Treatment depending of the status */
     if (200 == status) {
@@ -267,6 +271,8 @@ mender_api_check_for_deployment(mender_api_deployment_data_t *deployment) {
              MENDER_API_PATH_GET_NEXT_DEPLOYMENT,
              mender_api_config.artifact_name,
              mender_api_config.device_type);
+
+    mender_log_info("Check for deployments path: [%s]", path);
 
     /* Perform HTTP request */
     if (MENDER_OK
@@ -450,6 +456,8 @@ mender_api_download_artifact(char *uri, mender_err_t (*callback)(char *, cJSON *
     assert(NULL != callback);
     mender_err_t ret;
     int          status = 0;
+
+    mender_log_info("API download artifact");
 
     /* Perform HTTP request */
     if (MENDER_OK != (ret = mender_http_perform(NULL, uri, MENDER_HTTP_GET, NULL, NULL, &mender_api_http_artifact_callback, callback, &status))) {
@@ -769,6 +777,8 @@ mender_api_http_text_callback(mender_http_client_event_t event, void *data, size
     char       **response = (char **)params;
     mender_err_t ret      = MENDER_OK;
     char        *tmp;
+
+    mender_log_info("Inside API http callback: [%d]", event);
 
     /* Treatment depending of the event */
     switch (event) {

@@ -178,12 +178,18 @@ mender_http_perform(char                *jwt,
 
     request.header_fields = header_fields;
 
+    mender_log_info("will be trying to connect to server");
+
+
     /* Connect to the server */
     sock = mender_net_connect(host, port);
     if (sock < 0) {
         mender_log_error("Unable to open HTTP client connection");
         goto END;
     }
+
+    mender_log_error("net connected: %d", sock);
+
     if (MENDER_OK != (ret = callback(MENDER_HTTP_EVENT_CONNECTED, NULL, 0, params))) {
         mender_log_error("An error occurred while calling 'MENDER_HTTP_EVENT_CONNECTED' callback");
         goto END;
